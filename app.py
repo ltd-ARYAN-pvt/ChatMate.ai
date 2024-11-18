@@ -14,7 +14,6 @@ st.sidebar.markdown("""
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-
 if "user_name" not in st.session_state:
     st.session_state.user_name = None
 
@@ -59,7 +58,8 @@ if st.session_state.chat_active:
                 st.session_state.chat_history.append({"role": "assistant", "content": llm_response})
                 st.success("ChatMate's Response: " + llm_response)
 
-                play_audio(llm_response)
+                audio_file = text_to_speech(llm_response)
+                st.audio(audio_file, format="audio/mp3", autoplay=True)
 
     # Display Chat History
     st.write("### Chat History")
