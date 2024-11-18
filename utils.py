@@ -57,7 +57,7 @@ def query_gemini(prompt):
         return f"Error: {e}"
     
 #--> This will use to generate prompt
-def gen_prompt(text, response_type="Friendly and interactive", *args):
+def gen_prompt(text, response_type="Friend", *args):
     return f"{text}. Response type:- {response_type}. {args}"
 
 def play_audio(text):

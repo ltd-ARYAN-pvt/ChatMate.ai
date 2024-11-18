@@ -67,7 +67,7 @@ if st.session_state.chat_active:
         if chat["role"] == "user":
             st.markdown(f"**{st.session_state.user_name}:** {chat['content']}")
         elif chat["role"] == "assistant":
-            st.markdown(f"**ChatMate:** {chat['content']}")
+            st.markdown(f"**ChatMate.ai:** {chat['content']}")
 
 if st.session_state.chat_active and st.button("End Chat"):
     st.session_state.chat_active = False
