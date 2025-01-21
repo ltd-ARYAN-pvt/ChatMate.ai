@@ -1,5 +1,6 @@
 import streamlit as st
-from utils import speech_to_text, text_to_speech, query_gemini, gen_prompt, play_audio
+from utils import speech_to_text, text_to_speech, query_gemini, update_history, clean_text, play_audio_streamed, delete_history
+
 
 st.title("ChatMate.ai - Your English Speaking Teacher and Buddy 🎙️")
 st.markdown("**Speak to ChatMate, and it'll guide you to improve your English!**")
@@ -30,16 +31,22 @@ if st.session_state.user_name and not st.session_state.chat_topic:
     st.session_state.chat_topic = st.text_input(
         f"Hi {st.session_state.user_name}, what topic would you like to discuss?", key="chat_topic_input"
     )
+    if st.session_state.chat_topic:
+        update_history({
+                        "role": "user",
+                        "parts": f"The topic of discussion is {st.session_state.chat_topic}"
+        })
+        update_history({
+                        "role": "model",
+                        "parts": f"Oh {st.session_state.chat_topic} is nice topic of discussion."
+        })
+
 
 #--> Start Chat Button
 if st.session_state.user_name and st.session_state.chat_topic and not st.session_state.chat_active:
     if st.button("Start Chat"):
         st.session_state.chat_active = True
         st.success(f"Chat started! Topic: {st.session_state.chat_topic}")
-        role="You are an English speaking teacher. You will help me learn spoken english by asking me on what topic should we start our conversation."
-        prompt=gen_prompt(role)
-        reply=f"My name is {st.session_state.user_name}. I want to learn english. The topic of discussion is {st.session_state.chat_topic}"
-        prompt=gen_prompt(reply)
 
 st.subheader("Chat with ChatMate.ai")
 
@@ -50,27 +57,37 @@ if st.session_state.chat_active:
             print(user_input)
             if "exit" in user_input.lower():  # End chat trigger
                 st.session_state.chat_active = False
+                delete_history()
                 st.success("Chat ended. Thank you for using ChatMate.ai!")
             else:
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
-                prompt=gen_prompt(user_input)
-                llm_response = query_gemini(prompt)
+                llm_response = query_gemini(user_input)
+                update_history({
+                    "role":"user",
+                    "parts":user_input
+                })
+                update_history({
+                    "role": "model",
+                    "parts": llm_response
+                })
                 st.session_state.chat_history.append({"role": "assistant", "content": llm_response})
-                st.success("ChatMate's Response: " + llm_response)
-
-                audio_file = text_to_speech(llm_response)
-                st.audio(audio_file, format="audio/mp3", autoplay=True)
+                st.markdown(f"{st.session_state.user_name}: {user_input}")
+                st.success(f"ChatMate's Response: {llm_response}")
+                play_audio_streamed(clean_text(llm_response))
+                
 
     # Display Chat History
-    st.write("### Chat History")
-    for chat in st.session_state.chat_history:
-        if chat["role"] == "user":
-            st.markdown(f"**{st.session_state.user_name}:** {chat['content']}")
-        elif chat["role"] == "assistant":
-            st.markdown(f"**ChatMate.ai:** {chat['content']}")
+    if st.button("Chat History"):
+        st.write("### Chat History")
+        for chat in st.session_state.chat_history:
+            if chat["role"] == "user":
+                st.markdown(f"**{st.session_state.user_name}:** <br>{chat['content']}", unsafe_allow_html=True)
+            elif chat["role"] == "assistant":
+                st.markdown(f"**ChatMate.ai:**\n{chat['content']}")
 
 if st.session_state.chat_active and st.button("End Chat"):
     st.session_state.chat_active = False
+    delete_history()
     st.session_state.user_name = None
     st.session_state.chat_topic = None
     st.success("Chat ended. Thank you for using ChatMate.ai!")
